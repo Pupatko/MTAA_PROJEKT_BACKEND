@@ -17,6 +17,7 @@ app.get('/', (request, response) => {
 
 
 app.post('/registerUser', db.registerUser)
+app.get('/loginUser', db.loginUser)
 
 
 app.listen(port, () => {

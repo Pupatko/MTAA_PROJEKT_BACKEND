@@ -1,0 +1,11 @@
+pouzivame JWT tokeny na autorizaciu user-a
+posielame ho z bckendu na frntend ulozime ho napr asyncstorage v requirements
+frontend posiela token na dalsie requesty a tak backend kontroluje ci to je ozaj on
+
+pri logOut-e pridame token do blacklistu ALEBO ho proste zneplatnime
+
+priu login/register by som robil nieco take , ze posielame json files stale a tam zadrbeme nejaky boolean
+napr pri logine/register , tak by som poslal :
+success : false/true
+message : nejaka sprava
+body    : napr cely vysledok queriny

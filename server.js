@@ -1,7 +1,8 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
-const db = require('./queries')
+const up = require('./userProvider')
+const sp = require('./subjectProvider')
 const port = 3000
 
 app.use(bodyParser.json())
@@ -16,8 +17,15 @@ app.get('/', (request, response) => {
 })
 
 
-app.post('/registerUser', db.registerUser)
-app.get('/loginUser', db.loginUser)
+// USER
+app.post('/registerUser' , up.registerUser);
+app.get('/loginUser' , up.loginUser);
+
+
+// SUBJECT (test)
+app.get('/getTests' , sp.getTestBySubject);
+app.get('/getQuestions' , sp.getQuestionsByTestId);
+app.get('/getAnswers' , sp.getAnswersByQuestionId);
 
 
 app.listen(port, () => {

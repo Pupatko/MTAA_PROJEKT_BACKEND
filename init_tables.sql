@@ -6,7 +6,7 @@ CREATE TABLE groups (
     name VARCHAR(100) NOT NULL,
     description TEXT NOT NULL,
     created_by UUID NOT NULL,
-    xp INTEGER DEFAULT 0 CHECK (xp >= 0), -- to avoid -N xp
+    xp INTEGER DEFAULT 0 CHECK (xp >= 0),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

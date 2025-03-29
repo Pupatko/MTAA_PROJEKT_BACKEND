@@ -1,21 +1,11 @@
-const Pool = require('pg').Pool
 const bcrypt = require('bcryptjs');
-const { request, response } = require('express');
+const pool = require('../config/db');
+
 const jwt = require('jsonwebtoken');
-require('dotenv').config()
-
-
-const pool = new Pool({
-  user: process.env.POSTGRE_USER ,
-  host: process.env.POSTGRE_HOST ,
-  database: process.env.POSTGRE_DATABASE ,
-  password: process.env.POSTGRE_PASSWORD ,
-  port: process.env.POSTGRE_PORT
-});
 
 
 // registration of user
-const registerUser = async (request , response) => {
+const register = async (request , response) => {
   const { name , password } = request.body;
   const salt = await bcrypt.genSalt(10);
   const hashed_password = await bcrypt.hash(password, salt);
@@ -36,7 +26,7 @@ const registerUser = async (request , response) => {
 
 
 // login of user
-const loginUser = async (request, response) => {
+const login = async (request, response) => {
   const { name , password } = request.body;
       
   try {
@@ -70,6 +60,6 @@ const loginUser = async (request, response) => {
 
 
 module.exports = {
-  registerUser,
-  loginUser
+  register,
+  login
 }

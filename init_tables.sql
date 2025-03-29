@@ -13,8 +13,8 @@ CREATE TABLE groups (
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     xp INTEGER DEFAULT 0 CHECK (xp >= 0),
-    group_id UUID NOT NULL,
-    name VARCHAR(100) NOT NULL,
+    group_id UUID,
+    name VARCHAR(100) NOT NULL UNIQUE,
     password TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

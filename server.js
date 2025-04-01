@@ -10,7 +10,9 @@ const cors = require('cors')
 
 // Route configuration
 const userRoutes = require('./routes/userRoutes');
-const subjectRoutes = require('./routes/subjectRoutes');
+const testRoutes = require('./routes/testRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+const groupRoutes = require('./routes/groupRoutes');
 
 // Middleware
 app.use(cors())
@@ -26,10 +28,12 @@ app.get('/', (request, response) => {
 })
 
 // Connect routes to main file
-app.use('/user', userRoutes) // Set user routes, /user/{}
-app.use('/subjects', subjectRoutes)
+app.use('/user', userRoutes);
+app.use('/test', testRoutes);
+app.use('/chat', chatRoutes);
+app.use('/group', groupRoutes);
 
 
 app.listen(port, () => {
-  console.log(`App running on port ${port}.`)
+  console.log('App running on port ' , port);
 })

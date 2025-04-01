@@ -59,7 +59,81 @@ const login = async (request, response) => {
 };
 
 
+// LOGOUT treba implementovat + JWT tokeny s tym
+
+
+// edit user name
+const editName = async (request, response) => {
+  const { id, newName } = request.body;
+  try {
+    const userInfo = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+    if (userInfo.rowCount === 0) {
+      return response.status(404).send("User not found");
+    }
+
+    const result = await pool.query("UPDATE users SET name = $1 WHERE id = $2 RETURNING *", [newName, id]);
+    return response.status(200).json({
+      success: true,
+      message: "User name updated successfully",
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error(err);
+    return response.status(500).send("ERROR !");
+  }
+};
+
+
+// edit user password
+const editPassword = async (request, response) => {
+  const { id, newPassword } = request.body;
+  try {
+    const userInfo = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+    if (userInfo.rowCount === 0) {
+      return response.status(404).send("User not found");
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    const result = await pool.query("UPDATE users SET password = $1 WHERE id = $2 RETURNING *", [hashedPassword, id]);
+    return response.status(200).json({
+      success: true,
+      message: "User password updated successfully",
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error(err);
+    return response.status(500).send("ERROR !");
+  }
+};
+
+
+// delete user
+const deleteUser = async (request, response) => {
+  const { id } = request.body;
+  try {
+    const userInfo = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+    if (userInfo.rowCount === 0) {
+      return response.status(404).send("User not found");
+    }
+    
+    await pool.query("DELETE FROM users WHERE id = $1", [id]);
+    return response.status(200).json({
+      success: true,
+      message: "User deleted successfully"
+    });
+  } catch (err) {
+    console.error(err);
+    return response.status(500).send("ERROR !");
+  }
+};
+
+
 module.exports = {
   register,
-  login
+  login,
+  editName,
+  editPassword,
+  deleteUser
 }

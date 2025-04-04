@@ -60,6 +60,8 @@ const login = async (request, response) => {
 
 
 // LOGOUT treba implementovat + JWT tokeny s tym
+// Overit pouzivatela: prisutupove(jwt), validacia vstupnych udajov, 
+// kontrola existencii mena ci eemail(nemoze zmenit ak uz take meno ezistuje)
 
 
 // edit user name

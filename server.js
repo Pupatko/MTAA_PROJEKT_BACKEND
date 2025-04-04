@@ -20,19 +20,36 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
 // TODO
-// Add logging middleware
-// Add Error handling middleware
+// Add logging middleware ??? 
 
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API FOR THE APP' })
 })
 
 // Connect routes to main file
-app.use('/user', userRoutes);
-app.use('/test', testRoutes);
-app.use('/chat', chatRoutes);
-app.use('/group', groupRoutes);
+app.use('/users', userRoutes);
+app.use('/tests', testRoutes);
+app.use('/chats', chatRoutes);
+app.use('/groups', groupRoutes);
 
+// Unknown route
+app.use((req, res, next) => {
+  res.status(404).json({
+      success: false,
+      message: 'Route not found'
+  });
+});
+
+// Error handling middleware, catches errors passed to next(err), example: return next(error);
+app.use((err, req, res, next) => {
+  console.error(err.message); // Logging occured error 
+  const statusCode = err.statusCode || 500; // Set status code
+  
+  res.status(statusCode).json({ // Send response
+    success: false,
+    message: statusCode === 500 ? 'Internal server error' : err.message
+  });
+});
 
 app.listen(port, () => {
   console.log('App running on port ' , port);

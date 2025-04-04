@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 
+//TODO: add verification of existing user group, only one gorup 
 
 // TOTO HANDLOVAT NA FRONTENDE - ze , 
 // new group
@@ -24,7 +25,7 @@ const create = async (request, response) => {
   }
 };
 
-
+// ! (only admin can change group name)
 // delete the group by id
 const deleteGroup = async (request, response) => {
   const { id } = request.body;
@@ -47,52 +48,51 @@ const deleteGroup = async (request, response) => {
 };
 
 
-// !!!!!!!!!!! HANDLE PERMISION HERE (only admin can change group name)
+// ! (only admin can change group name)
 // edit group name
 const editName = async (request, response) => {
     const { id , newName } = request.body;
   
-      try {
-          const result = await pool.query(
-              "UPDATE groups SET name = $1 WHERE id = $2 RETURNING *",
-              [newName , id]
-          );
-          
-          return response.status(200).json({
-              success: true,
-              message: "Group name edited succesfully",
-              data: result.rows[0]
-          })
-          
-      } catch (err) {
-          console.error(err);
-          return response.status(500).send("ERROR !");
-      }
-  };
+    try {
+        const result = await pool.query(
+            "UPDATE groups SET name = $1 WHERE id = $2 RETURNING *",
+            [newName , id]
+        );
+        
+        return response.status(200).json({
+            success: true,
+            data: result.rows[0]
+        })
+        
+    } catch (err) {
+        console.error(err);
+        return response.status(500).send("ERROR !");
+    }
+};
   
 
-// !!!!!!!!!!! HANDLE PERMISION HERE (only admin can change group name)
+// ! (only admin can change group name)
 // edit group name
 const editDescription = async (request, response) => {
     const { id , newDescription } = request.body;
   
-      try {
-          const result = await pool.query(
-              "UPDATE groups SET description = $1 WHERE id = $2 RETURNING *",
-              [newDescription , id]
-          );
-          
-          return response.status(200).json({
-              success: true,
-              message: "Group description edited succesfully",
-              data: result.rows[0]
-          })
-          
-      } catch (err) {
-          console.error(err);
-          return response.status(500).send("ERROR !");
-      }
-  };  
+    try {
+        const result = await pool.query(
+            "UPDATE groups SET description = $1 WHERE id = $2 RETURNING *",
+            [newDescription , id]
+        );
+        
+        return response.status(200).json({
+            success: true,
+            message: "Group description edited succesfully",
+            data: result.rows[0]
+        })
+        
+    } catch (err) {
+        console.error(err);
+        return response.status(500).send("ERROR !");
+    }
+};  
 
 
 module.exports = {

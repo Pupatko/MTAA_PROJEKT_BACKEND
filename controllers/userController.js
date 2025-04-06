@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 
 const jwt = require('jsonwebtoken');
+const generateTokens = require('../utils/generateTokens');
 
 
 // registration of user
@@ -24,7 +25,7 @@ const register = async (request , response) => {
   }
 };
 
-
+// SKONTROLOVAT LOGIN < CI JE SPRAVNE HANDLOVANIE JWT TOKENOV ... treba nieco pridat ? idk
 // login of user
 const login = async (request, response) => {
   const { name , password } = request.body;
@@ -39,12 +40,24 @@ const login = async (request, response) => {
     const result = await bcrypt.compare(password , user.password);
     
     if (result) {
+      
+      // generation of JWT tokens
+      const { accessToken , refreshToken } = generateTokens(userInfo.rows[0].id);
+      
+      response.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        // secure: true
+        sameSite: 'strict',
+        maxAge: 20 * 60 * 1000, // na testovanie 10 min
+      });
+      
       return response.status(200).json({
         success: true,
         message: "User successfully logged in",
-        data: userInfo.rows[0]
+        data: userInfo.rows[0],
+        accessToken: accessToken,
       });
-      
+ 
     } else {
       return response.status(400).json({
         success: false,
@@ -61,9 +74,9 @@ const login = async (request, response) => {
 
 // LOGOUT treba implementovat + JWT tokeny s tym
 // Overit pouzivatela: prisutupove(jwt), validacia vstupnych udajov, 
-// kontrola existencii mena ci eemail(nemoze zmenit ak uz take meno ezistuje)
 
 
+// kontrola existencii mena ci eemail(MUSI zmenit ak uz take meno ezistuje)
 // edit user name
 const editName = async (request, response) => {
   const { id, newName } = request.body;
@@ -99,6 +112,7 @@ const editPassword = async (request, response) => {
     const hashedPassword = await bcrypt.hash(newPassword, salt);
     
     const result = await pool.query("UPDATE users SET password = $1 WHERE id = $2 RETURNING *", [hashedPassword, id]);
+    
     return response.status(200).json({
       success: true,
       message: "User password updated successfully",
@@ -114,17 +128,22 @@ const editPassword = async (request, response) => {
 // delete user
 const deleteUser = async (request, response) => {
   const { id } = request.body;
+  
   try {
+    
     const userInfo = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+    
     if (userInfo.rowCount === 0) {
       return response.status(404).send("User not found");
     }
     
     await pool.query("DELETE FROM users WHERE id = $1", [id]);
+    
     return response.status(200).json({
       success: true,
       message: "User deleted successfully"
     });
+    
   } catch (err) {
     console.error(err);
     return response.status(500).send("ERROR !");
@@ -132,10 +151,35 @@ const deleteUser = async (request, response) => {
 };
 
 
+// get profile information
+const profile =  async (request, response) => {
+  const id = request.user.id;
+  
+  try {
+    // TU PRIDAT QUERINU NA STATS (lebo chcem profile , ale linknem to neskor (pre skusku))
+    const userInfo = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+
+    if (userInfo.rowCount === 0) {
+      return response.status(404).send("User not found");
+    };
+    
+    return response.status(200).json({
+      success: true,
+      message: "User found, profile shared",
+      data: userInfo.rows[0]
+    });
+    
+  } catch (err) {
+    console.error(err);
+    return response.status(500).send("ERROR !");
+  }
+};
+
 module.exports = {
   register,
   login,
   editName,
   editPassword,
-  deleteUser
+  deleteUser,
+  profile
 }

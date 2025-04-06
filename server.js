@@ -2,6 +2,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
 const port = 3000
+const cookieParser = require('cookie-parser');
 
 const cors = require('cors')
 // TODO 
@@ -13,11 +14,15 @@ const userRoutes = require('./routes/userRoutes');
 const testRoutes = require('./routes/testRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const groupRoutes = require('./routes/groupRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 // Middleware
 app.use(cors())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
+
+// Middleware CookieParser
+app.use(cookieParser());
 
 // TODO
 // Add logging middleware ??? 
@@ -31,6 +36,7 @@ app.use('/users', userRoutes);
 app.use('/tests', testRoutes);
 app.use('/chats', chatRoutes);
 app.use('/groups', groupRoutes);
+app.use('/auth', authRoutes);
 
 // Unknown route
 app.use((req, res, next) => {

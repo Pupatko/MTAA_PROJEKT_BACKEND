@@ -9,3 +9,10 @@ napr pri logine/register , tak by som poslal :
 success : false/true
 message : nejaka sprava
 body    : napr cely vysledok queriny
+
+
+DO .ENV SI PRIDAJ:
+JWT_ACCESS_SECRET = nieco
+JWT_REFRESH_SECRET = nieco
+JWT_ACCESS_EXPIRES = 15m
+JWT_REFRESH_EXPIRES = 30d

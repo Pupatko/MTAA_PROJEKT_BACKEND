@@ -5,9 +5,23 @@ const port = 3000
 const cookieParser = require('cookie-parser');
 
 const cors = require('cors')
-// TODO 
-// const http = require('http')
-// const WebSocket = require('ws').Server
+
+// Crete http server for socket.io
+const http = require('http')
+const server = http.createServer(app); 
+
+// Initialize Socket.io
+const { Server } = require('socket.io')
+const io = new Server(server, {  // connect socket.io to http server
+  cors: {
+    origin: "*",  // allow all domains to connect
+    methods: ["GET", "POST"]
+  }
+});
+
+// Chat sockets for socket.io server
+const chatSocket = require('./sockets/chatSocket');
+chatSocket.initializeChatSocket(io);
 
 // Route configuration
 const userRoutes = require('./routes/userRoutes');
@@ -57,6 +71,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(port, () => {
+// Use server.listen instead of app.listen for using socket.io
+server.listen(port, () => {
   console.log('App running on port ' , port);
 })

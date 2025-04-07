@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 
-const jwt = require('jsonwebtoken');
+// const jwt = require('jsonwebtoken');
 const generateTokens = require('../utils/generateTokens');
 
 
@@ -104,6 +104,12 @@ const editName = async (request, response) => {
       return response.status(404).send("User not found");
     }
 
+    // Check if the user with the new name already exists in DBS
+    const isNameFree = await pool.query("SELECT * FROM users WHERE name = $1", [newName]);
+    if (isNameFree.rowCount > 0) {
+      return response.status(400).send("This name is already taken");
+    }
+
     const result = await pool.query("UPDATE users SET name = $1 WHERE id = $2 RETURNING *", [newName, id]);
     return response.status(200).json({
       success: true,
@@ -115,6 +121,33 @@ const editName = async (request, response) => {
     return response.status(500).send("ERROR !");
   }
 };
+
+const editEmail = async (request, response) => {
+  const { id, newEmail } = request.body;
+  try {
+    const userInfo = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+    if (userInfo.rowCount === 0) {
+      return response.status(404).send("User not found");
+    }
+
+    // Check if the user with the new email already exists in DBS
+    const isEmailFree = await pool.query("SELECT * FROM users WHERE email = $1", [newEmail]);
+    if (isEmailFree.rowCount > 0) {
+      return response.status(400).send("This email is already taken");
+    }
+
+    const result = await pool.query("UPDATE users SET email = $1 WHERE id = $2 RETURNING *", [newEmail, id]);
+    return response.status(200).json({
+      success: true,
+      message: "User email updated successfully",
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error(err);
+    return response.status(500).send("ERROR !");
+  }
+
+}
 
 
 // edit user password
@@ -197,6 +230,7 @@ module.exports = {
   register,
   login,
   editName,
+  editEmail,
   editPassword,
   deleteUser,
   profile,

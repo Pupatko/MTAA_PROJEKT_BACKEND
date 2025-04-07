@@ -1,10 +1,4 @@
 What's Missing or Could Be Improved
 -- queries.js
-1. Implement Input Validation
-2. JWT Authentication
-3. Middleware for Authentication
-
-4. add WebSockets 
-
-5. Add logging middleware
-6. Add Error handling middleware
+1. Implement Input Validation and  Error Handling
+2. Test the Queries 

@@ -98,7 +98,7 @@ router.post('/login', userController.login);
  *       500:
  *         description: Server error
  */
-router.patch('/edit-name', userController.editName);
+router.patch('/edit-name', authenticate, userController.editName);
 
 /**
  * @swagger
@@ -128,7 +128,7 @@ router.patch('/edit-name', userController.editName);
  *       500:
  *         description: Server error
  */
-router.patch('/edit-password', userController.editPassword);
+router.patch('/edit-password', authenticate, userController.editPassword);
 
 /**
  * @swagger
@@ -155,7 +155,7 @@ router.patch('/edit-password', userController.editPassword);
  *       500:
  *         description: Server error
  */
-router.delete('/delete', userController.deleteUser);
+router.delete('/delete', authenticate, userController.deleteUser);
 
 /**
  * @swagger
@@ -187,6 +187,6 @@ router.get('/profile', authenticate, userController.profile);
  *       500:
  *         description: Server error
  */
-router.post('/logout', userController.logout);
+router.post('/logout', authenticate, userController.logout);
 
 module.exports = router;

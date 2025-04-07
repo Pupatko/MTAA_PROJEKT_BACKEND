@@ -17,8 +17,8 @@ const addChatMessage = async (request, response) => {
         data: result.rows[0]
     });
     } catch (err) {
-    console.error(err);
-    return response.status(500).send("ERROR !");
+        console.error(err);
+        return response.status(500).send("ERROR !");
     }
 };
 
@@ -35,14 +35,14 @@ const getMessagesByGroupId = async (request, response) => {
 
     if (result.rowCount === 0) {
         return response.status(404).json({
-        success: false,
-        message: "No messages found for this group",
+            success: false,
+            message: "No messages found for this group",
         });
     } else {
         return response.status(200).json({
-        success: true,
-        message: "Messages retrieved successfully",
-        data: result.rows
+            success: true,
+            message: "Messages retrieved successfully",
+            data: result.rows
         });
     }
     } catch (err) {
@@ -53,6 +53,6 @@ const getMessagesByGroupId = async (request, response) => {
 
 
 module.exports = {
-addChatMessage,
-getMessagesByGroupId
+    addChatMessage,
+    getMessagesByGroupId
 };

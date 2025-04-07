@@ -15,17 +15,11 @@ const http = require('http')
 const server = http.createServer(app); 
 
 // Initialize Socket.io
-const { Server } = require('socket.io')
-const io = new Server(server, {  // connect socket.io to http server
-  cors: {
-    origin: "*",  // allow all domains to connect
-    methods: ["GET", "POST"]
-  }
-});
+const WebSocket = require('ws');
+const { initializeChatSocket } = require('./sockets/chatSocket');
 
-// Chat sockets for socket.io server
-const chatSocket = require('./sockets/chatSocket');
-chatSocket.initializeChatSocket(io);
+const wss = new WebSocket.Server({ server });
+initializeChatSocket(wss);
 
 // Route configuration
 const userRoutes = require('./routes/userRoutes');
@@ -45,8 +39,6 @@ app.use(cookieParser());
 // Swagger route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// TODO
-// Add logging middleware ???
 
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API FOR THE APP' })
@@ -81,4 +73,6 @@ app.use((err, req, res, next) => {
 // Use server.listen instead of app.listen for using socket.io
 server.listen(port, () => {
   console.log('App running on port ' , port);
+  console.log('Socket.io server running on port ', port);
+  console.log(`API documentation available at http://localhost:${port}/api-docs`);
 })

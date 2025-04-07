@@ -95,9 +95,124 @@ const editDescription = async (request, response) => {
 };  
 
 
+const removeMember = async (request, response) => {
+    const { id, user_id } = request.body;
+
+    try {
+        if (!id || !user_id) {
+            return response.status(400).json({
+                success: false,
+                message: "Not provided group id or user_id",
+            });
+        }
+
+        const result = await pool.query(
+            "UPDATE users SET group_id = NULL WHERE id = $1 AND group_id = $2 RETURNING id",
+            [user_id, group_id]
+        );
+        
+        if (result.rowCount === 0) {
+            return response.status(404).json({
+                success: false,
+                message: "Member not found in the group",
+            });
+        }
+        return response.status(200).json({
+            success: true,
+            message: "Member deleted from the group",
+        });
+        
+    } catch (err) {
+        console.error(err);
+        return response.status(500).send("ERROR occured during deletion member from group.");
+    }
+};
+
+const getAllGroups = async (request, response) => {
+    try {
+        const result = await pool.query("SELECT * FROM groups");
+
+        if (result.rowCount === 0) {
+            return response.status(404).json({
+                success: false,
+                message: "No groups found",
+            });
+        } else {
+            return response.status(200).json({
+                success: true,
+                message: "Groups found",
+                data: result.rows
+            });
+        }
+        
+    } catch (err) {
+        console.error(err);
+        return response.status(500).send("ERROR !");
+    }
+}
+
+const getGroupById = async (request, response) => {
+    const { id } = request.body;
+
+    try {
+        const result = await pool.query("SELECT * FROM groups WHERE id = $1", [id]);
+
+        if (result.rowCount === 0) {
+            return response.status(404).json({
+                success: false,
+                message: "Group not found",
+            });
+        } else {
+            return response.status(200).json({
+                success: true,
+                message: "Group found",
+                data: result.rows[0]
+            });
+        }
+        
+    } catch (err) {
+        console.error(err);
+        return response.status(500).send("ERROR !");
+    }
+}
+
+
+const addMember = async (request, response) => {
+    const { group_id, user_id } = request.body;
+
+    try {
+        if (!group_id || !user_id) {
+            return response.status(400).json({
+                success: false,
+                message: "Not provided group id or user_id",
+            });
+        }
+
+        const result = await pool.query(
+            "UPDATE users SET group_id = $1 WHERE id = $2 RETURNING id, group_id",
+            [group_id, user_id]
+        );
+
+        return response.status(201).json({
+            success: true,
+            message: "Member added to the group",
+            data: result.rows[0]
+        });
+        
+    } catch (err) {
+        console.error(err);
+        return response.status(500).send("ERROR occured during adding member to group.");
+    }
+};
+
+
 module.exports = {
     create,
     deleteGroup,
     editName,
-    editDescription
+    editDescription,
+    removeMember, 
+    getAllGroups,
+    getGroupById,
+    addMember
 };

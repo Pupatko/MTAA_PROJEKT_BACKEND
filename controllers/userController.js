@@ -25,7 +25,7 @@ const register = async (request , response) => {
   }
 };
 
-// SKONTROLOVAT LOGIN < CI JE SPRAVNE HANDLOVANIE JWT TOKENOV ... treba nieco pridat ? idk
+
 // login of user
 const login = async (request, response) => {
   const { name , password } = request.body;
@@ -71,9 +71,27 @@ const login = async (request, response) => {
   }
 };
 
+// logout of user
+const logout = async (request, response) => {
+  try {
+    // deleting token
+    response.clearCookie('refreshToken', {
+      httpOnly: true,
+      // secure: true
+      sameSite: 'strict',
+    });
 
-// LOGOUT treba implementovat + JWT tokeny s tym
-// Overit pouzivatela: prisutupove(jwt), validacia vstupnych udajov, 
+    return response.status(200).json({
+      success: true,
+      message: "User successfully logged out",
+    });
+
+  } catch (err) {
+    console.error(err);
+    return response.status(500).send("ERROR !");
+  }
+};
+
 
 
 // kontrola existencii mena ci eemail(MUSI zmenit ak uz take meno ezistuje)
@@ -181,5 +199,6 @@ module.exports = {
   editName,
   editPassword,
   deleteUser,
-  profile
+  profile,
+  logout
 }

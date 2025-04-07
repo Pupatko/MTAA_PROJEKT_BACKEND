@@ -6,6 +6,10 @@ const cookieParser = require('cookie-parser');
 
 const cors = require('cors')
 
+// For swagger documentation
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
+
 // Crete http server for socket.io
 const http = require('http')
 const server = http.createServer(app); 
@@ -38,8 +42,11 @@ app.use(bodyParser.urlencoded({ extended: true }))
 // Middleware CookieParser
 app.use(cookieParser());
 
+// Swagger route
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // TODO
-// Add logging middleware ??? 
+// Add logging middleware ???
 
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API FOR THE APP' })

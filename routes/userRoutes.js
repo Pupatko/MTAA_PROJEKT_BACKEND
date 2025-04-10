@@ -76,6 +76,8 @@ router.post('/login', userController.login);
  *   patch:
  *     summary: Edit user's name
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -87,12 +89,25 @@ router.post('/login', userController.login);
  *               - newName
  *             properties:
  *               id:
- *                 type: integer
+ *                 type: string
+ *                 format: uuid
  *               newName:
  *                 type: string
  *     responses:
  *       200:
  *         description: User name updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *       401:
+ *         description: Unauthorized - authentication required
  *       404:
  *         description: User not found
  *       500:
@@ -106,6 +121,8 @@ router.patch('/edit-name', authenticate, userController.editName);
  *   patch:
  *     summary: Edit user's password
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -117,12 +134,26 @@ router.patch('/edit-name', authenticate, userController.editName);
  *               - newPassword
  *             properties:
  *               id:
- *                 type: integer
+ *                 type: string
+ *                 format: uuid
  *               newPassword:
  *                 type: string
  *     responses:
  *       200:
  *         description: User password updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Password updated successfully
+ *       401:
+ *         description: Unauthorized - authentication required
  *       404:
  *         description: User not found
  *       500:
@@ -132,34 +163,48 @@ router.patch('/edit-password', authenticate, userController.editPassword);
 
 /**
  * @swagger
- * /delete:
+ * /users/{id}:
  *   delete:
  *     summary: Delete a user
  *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - id
- *             properties:
- *               id:
- *                 type: integer
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: true
+ *         description: UUID of the user to delete
  *     responses:
  *       200:
  *         description: User deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: User deleted successfully
+ *       401:
+ *         description: Unauthorized - authentication required
+ *       403:
+ *         description: Forbidden - can only delete your own account
  *       404:
  *         description: User not found
  *       500:
  *         description: Server error
  */
-router.delete('/delete', authenticate, userController.deleteUser);
+router.delete('/:id', authenticate, userController.deleteUser);
 
 /**
  * @swagger
- * /profile:
+ * /users/profile:
  *   get:
  *     summary: Get user's profile
  *     tags: [Users]
@@ -168,6 +213,27 @@ router.delete('/delete', authenticate, userController.deleteUser);
  *     responses:
  *       200:
  *         description: User profile returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     name:
+ *                       type: string
+ *                     created_at:
+ *                       type: string
+ *                       format: date-time
+ *       401:
+ *         description: Unauthorized - authentication required
  *       404:
  *         description: User not found
  *       500:
@@ -181,9 +247,24 @@ router.get('/profile', authenticate, userController.profile);
  *   post:
  *     summary: Log out a user
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: User successfully logged out
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Logged out successfully
+ *       401:
+ *         description: Unauthorized - authentication required
  *       500:
  *         description: Server error
  */

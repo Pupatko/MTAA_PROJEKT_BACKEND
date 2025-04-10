@@ -1,27 +1,35 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 
-// const jwt = require('jsonwebtoken');
 const generateTokens = require('../utils/generateTokens');
+const achievementService = require('../services/achievementService');
 
 
 // registration of user
-const register = async (request , response) => {
-  const { name , password } = request.body;
+const register = async (request, response) => {
+  const { name, password } = request.body;
   const salt = await bcrypt.genSalt(10);
   const hashed_password = await bcrypt.hash(password, salt);
 
   try {
-      const result = await pool.query("INSERT INTO users (name , password) VALUES ($1, $2) RETURNING *", [name , hashed_password]);
-      return response.status(201).json({
-        success: true,
-        message: "User successfully registered",
-        data: result.rows[0]
+    const result = await pool.query(
+      "INSERT INTO users (name, password) VALUES ($1, $2) RETURNING *",
+      [name, hashed_password]
+    );
+
+    const newUserId = result.rows[0].id;
+
+    // Initialize user progress for achievements
+    await achievementService.initializeUserProgress(newUserId);
+
+    return response.status(201).json({
+      success: true,
+      message: "User successfully registered",
+      data: result.rows[0],
     });
-    
   } catch (err) {
-      console.error(err);
-      return response.status(500).send("ERROR !");
+    console.error(err);
+    return response.status(500).send("ERROR !");
   }
 };
 
@@ -50,6 +58,8 @@ const login = async (request, response) => {
         sameSite: 'strict',
         maxAge: 20 * 60 * 1000, // na testovanie 10 min
       });
+
+      await achievementService.updateUserProgress(user.id, 'login_count', 1);
       
       return response.status(200).json({
         success: true,
@@ -207,22 +217,74 @@ const profile =  async (request, response) => {
   const id = request.user.id;
   
   try {
-    // TU PRIDAT QUERINU NA STATS (lebo chcem profile , ale linknem to neskor (pre skusku))
-    const userInfo = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+    const userInfo = await pool.query(
+      "SELECT id, xp, group_id, name, created_at FROM users WHERE id = $1", 
+      [id]
+    );
 
     if (userInfo.rowCount === 0) {
       return response.status(404).send("User not found");
+    };
+
+    const messageCountQuery = await pool.query(
+      'SELECT COUNT(*) FROM chat_messages WHERE sender_id = $1', 
+      [id]
+    );
+    
+    const messageCount = parseInt(messageCountQuery.rows[0].count || '0');
+    
+    const achievementsCountQuery = await pool.query(
+      'SELECT COUNT(*) FROM user_achievements WHERE user_id = $1', 
+      [id]
+    );
+
+    const achievementsQuery = await pool.query(`
+      SELECT 
+        a.id, 
+        a.title,
+        a.description, 
+        a.condition_type,
+        a.condition_value,
+        a.icon_path,
+        (
+          CASE WHEN ua.user_id IS NOT NULL THEN true
+            ELSE false
+          END
+        ) AS unlocked,
+        ua.achieved_at,
+        uap.current_value,
+        uap.last_updated,
+        (
+          CASE 
+            WHEN ua.user_id IS NOT NULL THEN 100
+            WHEN uap.current_value IS NOT NULL AND a.condition_value > 0 
+              THEN LEAST(100, ROUND((uap.current_value * 100.0) / a.condition_value))
+            ELSE 0
+          END 
+        ) AS progress_percent
+      FROM achievements a
+      LEFT JOIN user_achievements ua ON a.id = ua.achievement_id AND ua.user_id = $1
+      LEFT JOIN user_achievement_progress uap ON a.condition_type = uap.condition_type AND uap.user_id = $1
+      ORDER BY a.condition_type, a.condition_value`,
+      [id]
+    );
+
+    const stats = {
+      message_count: messageCount,
+      achievements_count: parseInt(achievementsCountQuery.rows[0].count || '0')
     };
     
     return response.status(200).json({
       success: true,
       message: "User found, profile shared",
-      data: userInfo.rows[0]
+      data: userInfo.rows[0],
+      stats: stats,
+      achievements: achievementsQuery.rows
     });
     
   } catch (err) {
     console.error(err);
-    return response.status(500).send("ERROR !");
+    return response.status(500).send("Error to get user profile.");
   }
 };
 

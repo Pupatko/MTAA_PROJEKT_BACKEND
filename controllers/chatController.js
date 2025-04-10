@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const achievementService = require('../services/achievementService');
 
 
 // new message
@@ -6,16 +7,18 @@ const addChatMessage = async (request, response) => {
     const { sender_id, group_id, message } = request.body;
 
     try {
-    const result = await pool.query(
-        "INSERT INTO chat_messages (sender_id, group_id, message) VALUES ($1, $2, $3) RETURNING *",
-        [sender_id, group_id, message]
-    );
+        const result = await pool.query(
+            "INSERT INTO chat_messages (sender_id, group_id, message) VALUES ($1, $2, $3) RETURNING *",
+            [sender_id, group_id, message]
+        );
 
-    return response.status(201).json({
-        success: true,
-        message: "Message added successfully",
-        data: result.rows[0]
-    });
+        await achievementService.updateUserProgress(sender_id, 'message_sent', 1);
+
+        return response.status(201).json({
+            success: true,
+            message: "Message added successfully",
+            data: result.rows[0]
+        });
     } catch (err) {
         console.error(err);
         return response.status(500).send("ERROR !");

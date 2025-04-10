@@ -57,7 +57,21 @@ CREATE TABLE notifications (
 CREATE TABLE achievements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL
+    description TEXT NOT NULL,
+    condition_type VARCHAR(50) NOT NULL, 
+    condition_value INTEGER DEFAULT 1,
+    icon_path VARCHAR(255)
+);
+
+-- condition_type: 'xp', 'test_completed', 'message_sent', 'question_answered', ...
+-- we don't need to store the id of the achievement. This aproach is more flexible and faster(for achievements with static conditions).
+-- We can find the achievement by the condition_type and check if the condition_value is met.
+CREATE TABLE user_achievement_progress (
+    user_id UUID NOT NULL,
+    condition_type VARCHAR(50) NOT NULL,
+    current_value INTEGER DEFAULT 0,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, condition_type)
 );
 
 CREATE TABLE user_achievements (
@@ -67,6 +81,7 @@ CREATE TABLE user_achievements (
     PRIMARY KEY (user_id, achievement_id)
 );
 
+
 -- Pridanie cudzi klucov do tabuliek
 ALTER TABLE groups ADD CONSTRAINT groups_created_by FOREIGN KEY (created_by) REFERENCES users(id);
 ALTER TABLE users ADD CONSTRAINT users_group FOREIGN KEY (group_id) REFERENCES groups(id);
@@ -75,5 +90,7 @@ ALTER TABLE answers ADD CONSTRAINT answers_question FOREIGN KEY (question_id) RE
 ALTER TABLE chat_messages ADD CONSTRAINT chat_messages_sender FOREIGN KEY (sender_id) REFERENCES users(id);
 ALTER TABLE chat_messages ADD CONSTRAINT chat_messages_group FOREIGN KEY (group_id) REFERENCES groups(id);
 ALTER TABLE notifications ADD CONSTRAINT notifications_user FOREIGN KEY (user_id) REFERENCES users(id);
-ALTER TABLE user_achievements ADD CONSTRAINT user_achievements_user FOREIGN KEY (user_id) REFERENCES users(id);
-ALTER TABLE user_achievements ADD CONSTRAINT user_achievements_achievement FOREIGN KEY (achievement_id) REFERENCES achievements(id);
+
+ALTER TABLE user_achievement_progress ADD CONSTRAINT user_progress_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE user_achievements ADD CONSTRAINT user_achievements_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE user_achievements ADD CONSTRAINT user_achievements_achievement FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE;

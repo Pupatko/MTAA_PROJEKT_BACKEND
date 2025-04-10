@@ -3,6 +3,7 @@ const bodyParser = require('body-parser')
 const app = express()
 const port = 3000
 const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
 
 const cors = require('cors')
 
@@ -17,9 +18,11 @@ const server = http.createServer(app);
 // Initialize Socket.io
 const WebSocket = require('ws');
 const { initializeChatSocket } = require('./sockets/chatSocket');
+const { initializeNotificationSocket } = require('./sockets/notificationSocket');
 
 const wss = new WebSocket.Server({ server });
 initializeChatSocket(wss);
+initializeNotificationSocket(wss);
 
 // Route configuration
 const userRoutes = require('./routes/userRoutes');
@@ -27,6 +30,8 @@ const testRoutes = require('./routes/testRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const groupRoutes = require('./routes/groupRoutes');
 const authRoutes = require('./routes/authRoutes');
+const achievementRoutes = require('./routes/achievementsRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Middleware
 app.use(cors())
@@ -35,6 +40,9 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 // Middleware CookieParser
 app.use(cookieParser());
+
+// enabling the Helmet middleware
+app.use(helmet());
 
 // Swagger route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -50,6 +58,8 @@ app.use('/tests', testRoutes);
 app.use('/chats', chatRoutes);
 app.use('/groups', groupRoutes);
 app.use('/auth', authRoutes);
+app.use('/achievements', achievementRoutes);
+app.use('/notifications', notificationRoutes);
 
 // Unknown route
 app.use((req, res, next) => {

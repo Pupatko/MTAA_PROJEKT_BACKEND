@@ -1,13 +1,39 @@
 const pool = require('../config/db');
+const achievementService = require('../services/achievementService'); // Pridaný import achievementService
 
-//TODO: add verification of existing user group, only one gorup 
-
-// TOTO HANDLOVAT NA FRONTENDE - ze , 
-// new group
+// Creation of group
 const create = async (request, response) => {
     const { created_by , name , description } = request.body;
     
     try {
+        // User group owner verification
+        const existingGroupQuery = await pool.query(
+            "SELECT id FROM groups WHERE created_by = $1",
+            [created_by]
+        );
+        
+        if (existingGroupQuery.rowCount > 0) {
+            return response.status(400).json({
+                success: false,
+                message: "User already created a group. Only one group per user is allowed.",
+                existingGroupId: existingGroupQuery.rows[0].id
+            });
+        }
+        
+        // User group member verification
+        const userGroupQuery = await pool.query(
+            "SELECT group_id FROM users WHERE id = $1 AND group_id IS NOT NULL",
+            [created_by]
+        );
+        
+        if (userGroupQuery.rowCount > 0) {
+            return response.status(400).json({
+                success: false,
+                message: "User is already a member of a group. Please leave the current group before creating a new one.",
+                currentGroupId: userGroupQuery.rows[0].group_id
+            });
+        }
+
         const result = await pool.query(
             "INSERT INTO groups (name, description, created_by) VALUES ($1, $2, $3) RETURNING *",
             [name , description , created_by]
@@ -205,6 +231,31 @@ const addMember = async (request, response) => {
     }
 };
 
+const getGroupMembers = async (request, response) => {
+    const { id } = request.body;
+
+    try {
+        const result = await pool.query("SELECT * FROM users WHERE group_id = $1", [id]);
+
+        if (result.rowCount === 0) {
+            return response.status(404).json({
+                success: false,
+                message: "No members in the group",
+            });
+        } else {
+            return response.status(200).json({
+                success: true,
+                message: "Members found in the group ^^",
+                data: result.rows
+            });
+        }
+        
+    } catch (err) {
+        console.error(err);
+        return response.status(500).send("ERROR !");
+    }
+}
+
 
 module.exports = {
     create,
@@ -214,5 +265,6 @@ module.exports = {
     removeMember, 
     getAllGroups,
     getGroupById,
-    addMember
+    addMember,
+    getGroupMembers,
 };

@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const WebSocket = require('ws');
+const achievementService = require('../services/achievementService');
 
 function initializeChatSocket(wss) {
   wss.on('connection', (ws) => {
@@ -76,6 +77,12 @@ function initializeChatSocket(wss) {
             [user_id, group_id, message]
           );
 
+          try {
+            await achievementService.updateUserProgress(user_id, 'message_sent', 1);
+          } catch (e) {
+            console.error('Error updating achievement progress:', e);
+          }
+
           const messageId = queryResult.rows[0].id;
           const timestamp = queryResult.rows[0].created_at;
 
@@ -100,8 +107,8 @@ function initializeChatSocket(wss) {
             }
           });
         }
-      } catch (err) {
-        console.error('Error processing message:', err);
+      } catch (e) {
+        console.error('Error processing message:', e);
       }
     });
 

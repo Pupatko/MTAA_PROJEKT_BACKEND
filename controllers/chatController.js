@@ -4,7 +4,8 @@ const achievementService = require('../services/achievementService');
 
 // new message
 const addChatMessage = async (request, response) => {
-    const { sender_id, group_id, message } = request.body;
+    const sender_id = request.user.id;
+    const { group_id, message } = request.body;
 
     try {
         const result = await pool.query(

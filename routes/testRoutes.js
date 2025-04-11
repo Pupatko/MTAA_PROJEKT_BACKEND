@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const subjectController = require('../controllers/testController');
+const authenticate = require('../middlewares/authenticate');
 
 /**
  * @swagger
@@ -15,6 +16,8 @@ const subjectController = require('../controllers/testController');
  *   get:
  *     summary: Get tests by subject
  *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: [] 
  *     requestBody:
  *       required: true
  *       content:
@@ -29,12 +32,16 @@ const subjectController = require('../controllers/testController');
  *     responses:
  *       200:
  *         description: Tests found for the subject
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Invalid or expired token
  *       404:
  *         description: No test for the subject
  *       500:
  *         description: Server error
  */
-router.get('/test', subjectController.getTestBySubject);
+router.get('/test', authenticate, subjectController.getTestBySubject);
 
 /**
  * @swagger
@@ -42,6 +49,8 @@ router.get('/test', subjectController.getTestBySubject);
  *   get:
  *     summary: Get questions by test ID
  *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -56,12 +65,16 @@ router.get('/test', subjectController.getTestBySubject);
  *     responses:
  *       200:
  *         description: Questions found for the test
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Invalid or expired token
  *       404:
  *         description: No questions in the test
  *       500:
  *         description: Server error
  */
-router.get('/questions', subjectController.getQuestionsByTestId);
+router.get('/questions', authenticate, subjectController.getQuestionsByTestId);
 
 /**
  * @swagger
@@ -69,6 +82,8 @@ router.get('/questions', subjectController.getQuestionsByTestId);
  *   get:
  *     summary: Get answers by question ID
  *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -83,11 +98,15 @@ router.get('/questions', subjectController.getQuestionsByTestId);
  *     responses:
  *       200:
  *         description: Answers found for the question
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Invalid or expired token
  *       404:
  *         description: No answers in the question
  *       500:
  *         description: Server error
  */
-router.get('/answers', subjectController.getAnswersByQuestionId);
+router.get('/answers', authenticate, subjectController.getAnswersByQuestionId);
 
 module.exports = router;

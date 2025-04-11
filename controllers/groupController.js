@@ -3,7 +3,8 @@ const achievementService = require('../services/achievementService'); // PridanÃ
 
 // Creation of group
 const create = async (request, response) => {
-    const { created_by , name , description } = request.body;
+    const { name, description } = request.body;
+    const created_by = request.user.id;
     
     try {
         // User group owner verification
@@ -34,10 +35,22 @@ const create = async (request, response) => {
             });
         }
 
+        // Create group and update user group id
+        await pool.query('BEGIN');
+
+        // Create group
         const result = await pool.query(
             "INSERT INTO groups (name, description, created_by) VALUES ($1, $2, $3) RETURNING *",
             [name , description , created_by]
         );
+
+        const newGroup = result.rows[0];
+        await pool.query(
+            "UPDATE users SET group_id = $1 WHERE id = $2",
+            [newGroup.id, created_by]
+        );
+
+        await pool.query('COMMIT');
 
         return response.status(201).json({
             success: true,
@@ -46,21 +59,42 @@ const create = async (request, response) => {
     });
     
     } catch (err) {
+        await pool.query('ROLLBACK');
         console.error(err);
         return response.status(500).send("ERROR !");
   }
 };
 
-// ! (only admin can change group name)
+
 // delete the group by id
 const deleteGroup = async (request, response) => {
-  const { id } = request.body;
+    const id = request.params.id;
 
     try {
+        // To insure that all group members are removed from the group
+        await pool.query('BEGIN');
+
+        // Remove all members 
+        await pool.query(
+            "UPDATE users SET group_id = NULL WHERE group_id = $1",
+            [id]
+        );
+
         const result = await pool.query(
             "DELETE FROM groups WHERE id = $1",
             [id]
         );
+
+        if (result.rowCount === 0) {
+            // Rollback the transaction if deletion fails
+            await pool.query('ROLLBACK');
+            return response.status(404).json({
+                success: false,
+                message: "Group not found",
+            });
+        }
+
+        await pool.query('COMMIT');
         
         return response.status(200).json({
             success: true,
@@ -68,16 +102,17 @@ const deleteGroup = async (request, response) => {
         })
         
     } catch (err) {
+        await pool.query('ROLLBACK');
         console.error(err);
         return response.status(500).send("ERROR !");
     }
 };
 
 
-// ! (only admin can change group name)
 // edit group name
 const editName = async (request, response) => {
-    const { id , newName } = request.body;
+    const id = request.params.id;
+    const { newName } = request.body;
   
     try {
         const result = await pool.query(
@@ -89,7 +124,7 @@ const editName = async (request, response) => {
             success: true,
             data: result.rows[0]
         })
-        
+
     } catch (err) {
         console.error(err);
         return response.status(500).send("ERROR !");
@@ -97,10 +132,10 @@ const editName = async (request, response) => {
 };
   
 
-// ! (only admin can change group name)
 // edit group name
 const editDescription = async (request, response) => {
-    const { id , newDescription } = request.body;
+    const id = request.params.id;
+    const { newDescription } = request.body;
   
     try {
         const result = await pool.query(
@@ -122,7 +157,8 @@ const editDescription = async (request, response) => {
 
 
 const removeMember = async (request, response) => {
-    const { id, user_id } = request.body;
+    const group_id = request.params.id;
+    const user_id = request.params.user_id;
 
     try {
         if (!id || !user_id) {
@@ -178,7 +214,7 @@ const getAllGroups = async (request, response) => {
 }
 
 const getGroupById = async (request, response) => {
-    const { id } = request.body;
+    const id = request.params.id;
 
     try {
         const result = await pool.query("SELECT * FROM groups WHERE id = $1", [id]);
@@ -204,7 +240,8 @@ const getGroupById = async (request, response) => {
 
 
 const addMember = async (request, response) => {
-    const { group_id, user_id } = request.body;
+    const group_id = request.params.id;
+    const user_id = request.user.id; 
 
     try {
         if (!group_id || !user_id) {
@@ -232,10 +269,13 @@ const addMember = async (request, response) => {
 };
 
 const getGroupMembers = async (request, response) => {
-    const { id } = request.body;
+    const group_id = request.params.id;
 
     try {
-        const result = await pool.query("SELECT * FROM users WHERE group_id = $1", [id]);
+        const result = await pool.query(
+            "SELECT name, xp, created_at FROM users WHERE group_id = $1", 
+            [group_id]
+        );
 
         if (result.rowCount === 0) {
             return response.status(404).json({

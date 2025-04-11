@@ -2,7 +2,7 @@ const pool = require('../config/db');
 
 const getUserNotifications = async (req, res) => {
     try {
-        const userId = req.params.userId;
+        const userId = req.user.id;
 
         const notifications = await pool.query(
             `SELECT id, message, created_at, is_read 
@@ -36,7 +36,7 @@ const getUserNotifications = async (req, res) => {
 const markAsRead = async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.body.userId;
+        const userId = req.user.id;
 
         const result = await pool.query(
             'UPDATE notifications SET is_read = TRUE WHERE id = $1 AND user_id = $2 RETURNING id',
@@ -68,7 +68,7 @@ const markAsRead = async (req, res) => {
 
 const markAllAsRead = async (req, res) => {
     try {
-        const userId = req.body.userId; 
+        const userId = req.user.id;
 
         const result = await pool.query(
             'UPDATE notifications SET is_read = TRUE WHERE user_id = $1 AND is_read = FALSE RETURNING id',
@@ -94,7 +94,7 @@ const markAllAsRead = async (req, res) => {
 const deleteNotification = async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.body.userId;
+        const userId = req.user.id;
 
         const result = await pool.query(
             'DELETE FROM notifications WHERE id = $1 AND user_id = $2 RETURNING id',

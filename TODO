@@ -1,10 +1,9 @@
-What's Missing or Could Be Improved
--- queries.js
-1. Implement Input Validation and  Error Handling
-2. Test the Queries 
-3. Implement Achievements
-4. PUT 
-5. Binary file upload/download
-~) Improve the database schema(groups, achievements, etc.)
-6. User achievements and xp logic? 
-7. Background task scheduling?
+# TODO LIST:
+1. Implement Input Validation(passwords, names, ...), Error Handling
+2. Binary file upload/download
+3. Background task scheduling (
+    => (notification) or 
+    => (week statistics) or
+    maybe possible(custom events) or
+    ...
+)

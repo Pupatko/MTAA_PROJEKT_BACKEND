@@ -3,7 +3,7 @@ const router = express.Router();
 
 const groupController = require('../controllers/groupController');
 // Add middleware for controling group permissions
-const { isGroupCreator } = require('../middlewares/groupPermission');
+const { isGroupCreator, isGroupMember } = require('../middlewares/groupPermission');
 const authenticate = require('../middlewares/authenticate');
 
 
@@ -31,57 +31,18 @@ const authenticate = require('../middlewares/authenticate');
  *             required:
  *               - name
  *               - description
- *               - created_by
  *             properties:
  *               name:
  *                 type: string
- *                 example: Study Group
  *               description:
  *                 type: string
- *                 example: A group for studying together
- *               created_by:
- *                 type: string
- *                 format: uuid
- *                 description: ID of the user creating the group
- *                 example: 123e4567-e89b-12d3-a456-426614174001
  *     responses:
  *       201:
  *         description: Group created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Group created succesfully
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                       example: 123e4567-e89b-12d3-a456-426614174000
- *                     name:
- *                       type: string
- *                       example: Study Group
- *                     description:
- *                       type: string
- *                       example: A group for studying together
- *                     created_by:
- *                       type: string
- *                       format: uuid
- *                       example: 123e4567-e89b-12d3-a456-426614174001
- *                     created_at:
- *                       type: string
- *                       format: date-time
+ *       400:
+ *         description: Bad request
  *       401:
- *         description: Unauthorized - User not authenticated or invalid token
- *       403:
- *         description: Forbidden - Token expired or invalid format
+ *         description: Unauthorized
  *       500:
  *         description: Server error
  */
@@ -98,43 +59,8 @@ router.post('/', authenticate, groupController.create);
  *     responses:
  *       200:
  *         description: List of all groups
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Groups found
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         format: uuid
- *                         example: 123e4567-e89b-12d3-a456-426614174000
- *                       name:
- *                         type: string
- *                         example: Study Group
- *                       description:
- *                         type: string
- *                         example: Group for studying together
- *                       created_by:
- *                         type: string
- *                         format: uuid
- *                         example: 123e4567-e89b-12d3-a456-426614174001
- *                       created_at:
- *                         type: string
- *                         format: date-time
  *       401:
- *         description: Unauthorized - User not authenticated or invalid token
- *       403:
- *         description: Forbidden - Token expired or invalid format
+ *         description: Unauthorized
  *       404:
  *         description: No groups found
  *       500:
@@ -155,47 +81,13 @@ router.get('/', authenticate, groupController.getAllGroups);
  *         name: id
  *         schema:
  *           type: string
- *           format: uuid
  *         required: true
- *         description: ID of the group to retrieve
+ *         description: Group ID
  *     responses:
  *       200:
  *         description: Group details
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Group found
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                       example: 123e4567-e89b-12d3-a456-426614174000
- *                     name:
- *                       type: string
- *                       example: Study Group
- *                     description:
- *                       type: string
- *                       example: Group for studying together
- *                     created_by:
- *                       type: string
- *                       format: uuid
- *                       example: 123e4567-e89b-12d3-a456-426614174001
- *                     created_at:
- *                       type: string
- *                       format: date-time
  *       401:
- *         description: Unauthorized - User not authenticated or invalid token
- *       403:
- *         description: Forbidden - Token expired or invalid format
+ *         description: Unauthorized
  *       404:
  *         description: Group not found
  *       500:
@@ -216,54 +108,25 @@ router.get('/:id', authenticate, groupController.getGroupById);
  *         name: id
  *         schema:
  *           type: string
- *           format: uuid
  *         required: true
- *         description: ID of the group
+ *         description: Group ID
  *     responses:
  *       200:
  *         description: List of group members
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Members found in the group ^^
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         format: uuid
- *                       name:
- *                         type: string
- *                       email:
- *                         type: string
- *                       group_id:
- *                         type: string
- *                         format: uuid
  *       401:
- *         description: Unauthorized - User not authenticated or invalid token
- *       403:
- *         description: Forbidden - Token expired or invalid format
+ *         description: Unauthorized
  *       404:
- *         description: No members in the group
+ *         description: No members found
  *       500:
  *         description: Server error
  */
-router.get('/:id/members', authenticate, groupController.getGroupMembers);
+router.get('/:id/members', authenticate, isGroupMember, groupController.getGroupMembers);
 
 /**
  * @swagger
- * /groups/{id}:
+ * /groups/{id}/member:
  *   post:
- *     summary: Add member to a group
+ *     summary: Join a group
  *     tags: [Groups]
  *     security:
  *       - bearerAuth: []
@@ -272,60 +135,17 @@ router.get('/:id/members', authenticate, groupController.getGroupMembers);
  *         name: id
  *         schema:
  *           type: string
- *           format: uuid
  *         required: true
- *         description: ID of the group
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - group_id
- *               - user_id
- *             properties:
- *               group_id:
- *                 type: string
- *                 format: uuid
- *                 description: ID of the group
- *                 example: 123e4567-e89b-12d3-a456-426614174000
- *               user_id:
- *                 type: string
- *                 format: uuid
- *                 description: ID of the user to add
- *                 example: 123e4567-e89b-12d3-a456-426614174001
+ *         description: Group ID
  *     responses:
  *       201:
- *         description: Member successfully added to the group
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Member added to the group
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                       example: 123e4567-e89b-12d3-a456-426614174001
- *                     group_id:
- *                       type: string
- *                       format: uuid
- *                       example: 123e4567-e89b-12d3-a456-426614174000
+ *         description: Successfully joined the group
  *       400:
- *         description: Bad request - missing required parameters
+ *         description: Bad request
  *       401:
- *         description: Unauthorized - User not authenticated or invalid token
- *       403:
- *         description: Forbidden - Token expired or invalid format
+ *         description: Unauthorized
+ *       404:
+ *         description: Group not found
  *       500:
  *         description: Server error
  */
@@ -333,146 +153,9 @@ router.post('/:id/member', authenticate, groupController.addMember);
 
 /**
  * @swagger
- * /groups/edit-name:
+ * /groups/{id}/edit-name:
  *   patch:
- *     summary: Edit group name (group owner only)
- *     tags: [Groups]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - id
- *               - newName
- *             properties:
- *               id:
- *                 type: string
- *                 format: uuid
- *                 description: ID of the group
- *                 example: 123e4567-e89b-12d3-a456-426614174000
- *               newName:
- *                 type: string
- *                 description: New name for the group
- *                 example: Updated Study Group
- *     responses:
- *       200:
- *         description: Group name updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                       example: 123e4567-e89b-12d3-a456-426614174000
- *                     name:
- *                       type: string
- *                       example: Updated Study Group
- *                     description:
- *                       type: string
- *                     created_by:
- *                       type: string
- *                       format: uuid
- *                     created_at:
- *                       type: string
- *                       format: date-time
- *       401:
- *         description: Unauthorized - User not authenticated or invalid token
- *       403:
- *         description: Forbidden - Token expired or invalid format/User is not the creator of the group
- *       404:
- *         description: Group not found
- *       500:
- *         description: Server error
- */
-router.patch('/edit-name', authenticate, isGroupCreator, groupController.editName);
-
-/**
- * @swagger
- * /groups/edit-description:
- *   patch:
- *     summary: Edit group description (group owner only)
- *     tags: [Groups]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - id
- *               - newDescription
- *             properties:
- *               id:
- *                 type: string
- *                 format: uuid
- *                 description: ID of the group
- *                 example: 123e4567-e89b-12d3-a456-426614174000
- *               newDescription:
- *                 type: string
- *                 description: New description for the group
- *                 example: Updated description for our study group
- *     responses:
- *       200:
- *         description: Group description updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Group description edited succesfully
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                       example: 123e4567-e89b-12d3-a456-426614174000
- *                     name:
- *                       type: string
- *                     description:
- *                       type: string
- *                       example: Updated description for our study group
- *                     created_by:
- *                       type: string
- *                       format: uuid
- *                     created_at:
- *                       type: string
- *                       format: date-time
- *       401:
- *         description: Unauthorized - User not authenticated or invalid token
- *       403:
- *         description: Forbidden - Token expired or invalid format/User is not the creator of the group
- *       404:
- *         description: Group not found
- *       500:
- *         description: Server error
- */
-router.patch('/edit-description', authenticate, isGroupCreator, groupController.editDescription);
-
-/**
- * @swagger
- * /groups/{id}:
- *   delete:
- *     summary: Delete group owner group by ID (group owner only)
+ *     summary: Edit group name (owner only)
  *     tags: [Groups]
  *     security:
  *       - bearerAuth: []
@@ -481,9 +164,88 @@ router.patch('/edit-description', authenticate, isGroupCreator, groupController.
  *         name: id
  *         schema:
  *           type: string
- *           format: uuid
  *         required: true
- *         description: ID of the group to delete
+ *         description: Group ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - newName
+ *             properties:
+ *               newName:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Group name updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Group not found
+ *       500:
+ *         description: Server error
+ */
+router.patch('/:id/edit-name', authenticate, isGroupCreator, groupController.editName);
+
+/**
+ * @swagger
+ * /groups/{id}/edit-description:
+ *   patch:
+ *     summary: Edit group description (owner only)
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Group ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - newDescription
+ *             properties:
+ *               newDescription:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Group description updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Group not found
+ *       500:
+ *         description: Server error
+ */
+router.patch('/:id/edit-description', authenticate, isGroupCreator, groupController.editDescription);
+
+/**
+ * @swagger
+ * /groups/{id}:
+ *   delete:
+ *     summary: Delete group (owner only)
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Group ID
  *     responses:
  *       200:
  *         description: Group deleted successfully
@@ -497,11 +259,11 @@ router.patch('/edit-description', authenticate, isGroupCreator, groupController.
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: Group deleted succesfully
+ *                   example: Group deleted successfully
  *       401:
- *         description: Unauthorized - User not authenticated or invalid token
+ *         description: Unauthorized
  *       403:
- *         description: Forbidden - Token expired or invalid format/User is not the creator of the group
+ *         description: Forbidden
  *       404:
  *         description: Group not found
  *       500:
@@ -513,9 +275,8 @@ router.delete('/:id', authenticate, isGroupCreator, groupController.deleteGroup)
  * @swagger
  * /groups/{id}/member/{user_id}:
  *   delete:
- *     summary: Remove a member from group (group owner only)
+ *     summary: Remove a member from group (owner only)
  *     tags: [Groups]
- *     description: Removes a user from the group. This action can only be performed by the group creator.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -523,38 +284,25 @@ router.delete('/:id', authenticate, isGroupCreator, groupController.deleteGroup)
  *         name: id
  *         schema:
  *           type: string
- *           format: uuid
  *         required: true
- *         description: ID of the group
+ *         description: Group ID
  *       - in: path
  *         name: user_id
  *         schema:
  *           type: string
- *           format: uuid
  *         required: true
- *         description: ID of the user to be removed
+ *         description: User ID
  *     responses:
  *       200:
- *         description: User successfully removed from the group
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Member deleted from the group
+ *         description: Member removed successfully
  *       400:
- *         description: Bad request - missing required parameters
+ *         description: Bad request
  *       401:
- *         description: Unauthorized - User not authenticated or invalid token
+ *         description: Unauthorized
  *       403:
- *         description: Forbidden - User is not the creator of the group or token expired
+ *         description: Forbidden
  *       404:
- *         description: Member not found in the group
+ *         description: Not found
  *       500:
  *         description: Server error
  */

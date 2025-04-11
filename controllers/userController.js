@@ -13,7 +13,7 @@ const register = async (request, response) => {
 
   try {
     const result = await pool.query(
-      "INSERT INTO users (name, password) VALUES ($1, $2) RETURNING *",
+      "INSERT INTO users (name, password) VALUES ($1, $2) RETURNING id, name, xp, created_at",
       [name, hashed_password]
     );
 
@@ -60,11 +60,16 @@ const login = async (request, response) => {
       });
 
       await achievementService.updateUserProgress(user.id, 'login_count', 1);
+
+      const userInfoWithoutPassword = await pool.query(
+        "SELECT id, name, xp, created_at, group_id FROM users WHERE id = $1", 
+        [user.id]
+      );
       
       return response.status(200).json({
         success: true,
         message: "User successfully logged in",
-        data: userInfo.rows[0],
+        data: userInfoWithoutPassword.rows[0],
         accessToken: accessToken,
       });
  
@@ -102,12 +107,11 @@ const logout = async (request, response) => {
   }
 };
 
-
-
-// kontrola existencii mena ci eemail(MUSI zmenit ak uz take meno ezistuje)
 // edit user name
 const editName = async (request, response) => {
-  const { id, newName } = request.body;
+  const { newName } = request.body;
+  const id = request.user.id;
+
   try {
     const userInfo = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
     if (userInfo.rowCount === 0) {
@@ -120,7 +124,7 @@ const editName = async (request, response) => {
       return response.status(400).send("This name is already taken");
     }
 
-    const result = await pool.query("UPDATE users SET name = $1 WHERE id = $2 RETURNING *", [newName, id]);
+    const result = await pool.query("UPDATE users SET name = $1 WHERE id = $2 RETURNING id, name, xp, created_at", [newName, id]);
     return response.status(200).json({
       success: true,
       message: "User name updated successfully",
@@ -132,37 +136,11 @@ const editName = async (request, response) => {
   }
 };
 
-const editEmail = async (request, response) => {
-  const { id, newEmail } = request.body;
-  try {
-    const userInfo = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
-    if (userInfo.rowCount === 0) {
-      return response.status(404).send("User not found");
-    }
-
-    // Check if the user with the new email already exists in DBS
-    const isEmailFree = await pool.query("SELECT * FROM users WHERE email = $1", [newEmail]);
-    if (isEmailFree.rowCount > 0) {
-      return response.status(400).send("This email is already taken");
-    }
-
-    const result = await pool.query("UPDATE users SET email = $1 WHERE id = $2 RETURNING *", [newEmail, id]);
-    return response.status(200).json({
-      success: true,
-      message: "User email updated successfully",
-      data: result.rows[0]
-    });
-  } catch (err) {
-    console.error(err);
-    return response.status(500).send("ERROR !");
-  }
-
-}
-
-
 // edit user password
 const editPassword = async (request, response) => {
-  const { id, newPassword } = request.body;
+  const { newPassword } = request.body;
+  const id = request.user.id;
+  
   try {
     const userInfo = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
     if (userInfo.rowCount === 0) {
@@ -172,7 +150,7 @@ const editPassword = async (request, response) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
     
-    const result = await pool.query("UPDATE users SET password = $1 WHERE id = $2 RETURNING *", [hashedPassword, id]);
+    const result = await pool.query("UPDATE users SET password = $1 WHERE id = $2 RETURNING id, name, xp, created_at", [hashedPassword, id]);
     
     return response.status(200).json({
       success: true,
@@ -188,7 +166,7 @@ const editPassword = async (request, response) => {
 
 // delete user
 const deleteUser = async (request, response) => {
-  const { id } = request.body;
+  const { id } = request.user.id;
   
   try {
     
@@ -292,7 +270,6 @@ module.exports = {
   register,
   login,
   editName,
-  editEmail,
   editPassword,
   deleteUser,
   profile,

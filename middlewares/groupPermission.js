@@ -1,7 +1,8 @@
 const pool = require('../config/db');
 
 const isGroupCreator = async (req, res, next) => {
-    const id = req.body.id;
+    // Retrive group id from reqest path /groups/:id/
+    const id = req.params.id; 
     const user_id = req.user.id;
     
     if (!id || !user_id) { // check thet request contains group id and user id
@@ -42,7 +43,7 @@ const isGroupCreator = async (req, res, next) => {
 };
 
 const isGroupMember = async (req, res, next) => {
-    const id = req.params.id; // groups/:id
+    const id = req.params.id;
     const user_id = req.user.id;
     
     if (!id || !user_id) { // check thet request contains group id and user id

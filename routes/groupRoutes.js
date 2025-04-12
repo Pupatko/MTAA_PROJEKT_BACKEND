@@ -6,6 +6,7 @@ const groupController = require('../controllers/groupController');
 const { isGroupCreator, isGroupMember } = require('../middlewares/groupPermission');
 const authenticate = require('../middlewares/authenticate');
 
+const { validateGroupCreation, validateChangeGroupName, validateChangeGroupDescription } = require('../middlewares/validation');
 
 /**
  * @swagger
@@ -46,7 +47,7 @@ const authenticate = require('../middlewares/authenticate');
  *       500:
  *         description: Server error
  */
-router.post('/', authenticate, groupController.create);
+router.post('/', authenticate, validateGroupCreation, groupController.create);
 
 /**
  * @swagger
@@ -189,7 +190,7 @@ router.post('/:id/member', authenticate, groupController.addMember);
  *       500:
  *         description: Server error
  */
-router.patch('/:id/edit-name', authenticate, isGroupCreator, groupController.editName);
+router.patch('/:id/edit-name', authenticate, isGroupCreator, validateChangeGroupName, groupController.editName);
 
 /**
  * @swagger
@@ -229,7 +230,7 @@ router.patch('/:id/edit-name', authenticate, isGroupCreator, groupController.edi
  *       500:
  *         description: Server error
  */
-router.patch('/:id/edit-description', authenticate, isGroupCreator, groupController.editDescription);
+router.patch('/:id/edit-description', authenticate, isGroupCreator, validateChangeGroupDescription, groupController.editDescription);
 
 /**
  * @swagger

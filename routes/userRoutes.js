@@ -3,6 +3,9 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const authenticate = require('../middlewares/authenticate');
 
+// middlewares used express-validator to validate user inputed data(name, password)
+const { validateRegistration, validateChangeName, validateChangePassword } = require('../middlewares/validation');
+
 /**
  * @swagger
  * tags:
@@ -49,7 +52,7 @@ const authenticate = require('../middlewares/authenticate');
  *       500:
  *         description: Server error
  */
-router.post('/register', userController.register);
+router.post('/register', validateRegistration, userController.register);
 
 /**
  * @swagger
@@ -142,7 +145,7 @@ router.post('/login', userController.login);
  *       500:
  *         description: Server error
  */
-router.patch('/edit-name', authenticate, userController.editName);
+router.patch('/edit-name', authenticate, validateChangeName, userController.editName);
 
 /**
  * @swagger
@@ -186,7 +189,7 @@ router.patch('/edit-name', authenticate, userController.editName);
  *       500:
  *         description: Server error
  */
-router.patch('/edit-password', authenticate, userController.editPassword);
+router.patch('/edit-password', authenticate, validateChangePassword, userController.editPassword);
 
 /**
  * @swagger

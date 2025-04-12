@@ -1,6 +1,6 @@
 # TODO LIST:
-1. Implement Input Validation(passwords, names, ...), Error Handling
-2. Binary file upload/download
+1. Binary file upload/download(save path in db)
+2. Add README.md file
 3. Background task scheduling (
     => (notification) or 
     => (week statistics) or

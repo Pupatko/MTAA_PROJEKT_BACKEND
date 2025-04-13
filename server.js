@@ -32,6 +32,7 @@ const groupRoutes = require('./routes/groupRoutes');
 const authRoutes = require('./routes/authRoutes');
 const achievementRoutes = require('./routes/achievementsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const userAvatarsRoutes = require('./routes/userAvatarsRoutes');
 
 // Middleware
 app.use(cors())
@@ -60,6 +61,7 @@ app.use('/groups', groupRoutes);
 app.use('/auth', authRoutes);
 app.use('/achievements', achievementRoutes);
 app.use('/notifications', notificationRoutes);
+app.use('/users/avatar', userAvatarsRoutes);
 
 // Unknown route
 app.use((req, res, next) => {

@@ -81,6 +81,14 @@ CREATE TABLE user_achievements (
     PRIMARY KEY (user_id, achievement_id)
 );
 
+-- Table for user files (e.g. profile pictures, documents, etc.)
+CREATE TABLE user_files (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    file_type VARCHAR(50) NOT NULL, -- e.g. 'avatar', 'document', etc.
+    file_path VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Pridanie cudzi klucov do tabuliek
 ALTER TABLE groups ADD CONSTRAINT groups_created_by FOREIGN KEY (created_by) REFERENCES users(id);

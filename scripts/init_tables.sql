@@ -63,6 +63,15 @@ CREATE TABLE achievements (
     icon_path VARCHAR(255)
 );
 
+CREATE TABLE friends (
+    user_id UUID NOT NULL,
+    friend_id UUID NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, friend_id),
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_friend FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- condition_type: 'xp', 'test_completed', 'message_sent', 'question_answered', ...
 -- we don't need to store the id of the achievement. This aproach is more flexible and faster(for achievements with static conditions).
 -- We can find the achievement by the condition_type and check if the condition_value is met.

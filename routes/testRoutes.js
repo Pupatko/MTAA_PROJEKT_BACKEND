@@ -109,4 +109,68 @@ router.get('/questions', authenticate, subjectController.getQuestionsByTestId);
  */
 router.get('/answers', authenticate, subjectController.getAnswersByQuestionId);
 
+/**
+ * @swagger
+ * /tests/answers:
+ *   post:
+ *     summary: Submit test answers and get results
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - testId
+ *               - userAnswers
+ *             properties:
+ *               testId:
+ *                 type: string
+ *                 format: uuid
+ *               userAnswers:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     questionId:
+ *                       type: string
+ *                       format: uuid
+ *                     answerId:
+ *                       type: string
+ *                       format: uuid
+ *     responses:
+ *       200:
+ *         description: Test evaluated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalQuestions:
+ *                       type: integer
+ *                     correctAnswers:
+ *                       type: integer
+ *                     score:
+ *                       type: integer
+ *                     incorrectQuestions:
+ *                       type: array
+ *       400:
+ *         description: Invalid request format
+ *       404:
+ *         description: Test not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/answers', authenticate, subjectController.checkUserAnswers);
+
 module.exports = router;

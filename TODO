@@ -1,8 +1,8 @@
 # TODO LIST:
-1. Binary file upload/download(save path in db)
-2. Add README.md file
-3. Background task scheduling (
-    => (notification) or 
+
+1. Add README.md file
+2. Background task scheduling (
+    => (notification) or
     => (week statistics) or
     maybe possible(custom events) or
     ...

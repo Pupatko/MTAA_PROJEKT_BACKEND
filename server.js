@@ -33,6 +33,7 @@ const authRoutes = require('./routes/authRoutes');
 const achievementRoutes = require('./routes/achievementsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const userAvatarsRoutes = require('./routes/userAvatarsRoutes');
+const friendRoutes = require('./routes/friendRoutes');
 
 // Middleware
 app.use(cors())
@@ -62,6 +63,7 @@ app.use('/auth', authRoutes);
 app.use('/achievements', achievementRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/users/avatar', userAvatarsRoutes);
+app.use('/friends', friendRoutes);
 
 // Unknown route
 app.use((req, res, next) => {

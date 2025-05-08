@@ -8,10 +8,23 @@ const achievementService = require('../services/achievementService');
 // registration of user
 const register = async (request, response) => {
   const { name, password } = request.body;
-  const salt = await bcrypt.genSalt(10);
-  const hashed_password = await bcrypt.hash(password, salt);
 
   try {
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE name = $1",
+      [name]
+    );
+    
+    if (existingUser.rowCount > 0) {
+      return response.status(409).json({
+        success: false,
+        message: "Username already exists"
+      });
+    }
+    
+    const salt = await bcrypt.genSalt(10);
+    const hashed_password = await bcrypt.hash(password, salt);
+    
     const result = await pool.query(
       "INSERT INTO users (name, password) VALUES ($1, $2) RETURNING id, name, xp, created_at",
       [name, hashed_password]

@@ -49,6 +49,8 @@ const { validateRegistration, validateChangeName, validateChangePassword } = req
  *                   example: User successfully registered
  *                 data:
  *                   type: object
+ *       409:
+ *         description: Username already exists
  *       500:
  *         description: Server error
  */

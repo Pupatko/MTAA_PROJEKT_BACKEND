@@ -100,14 +100,20 @@ CREATE TABLE user_files (
 );
 
 -- Pridanie cudzi klucov do tabuliek
-ALTER TABLE groups ADD CONSTRAINT groups_created_by FOREIGN KEY (created_by) REFERENCES users(id);
-ALTER TABLE users ADD CONSTRAINT users_group FOREIGN KEY (group_id) REFERENCES groups(id);
-ALTER TABLE questions ADD CONSTRAINT questions_test FOREIGN KEY (test_id) REFERENCES tests(id);
-ALTER TABLE answers ADD CONSTRAINT answers_question FOREIGN KEY (question_id) REFERENCES questions(id);
-ALTER TABLE chat_messages ADD CONSTRAINT chat_messages_sender FOREIGN KEY (sender_id) REFERENCES users(id);
-ALTER TABLE chat_messages ADD CONSTRAINT chat_messages_group FOREIGN KEY (group_id) REFERENCES groups(id);
-ALTER TABLE notifications ADD CONSTRAINT notifications_user FOREIGN KEY (user_id) REFERENCES users(id);
+ALTER TABLE groups ADD CONSTRAINT groups_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE users ADD CONSTRAINT users_group FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE SET NULL;
+ALTER TABLE questions ADD CONSTRAINT questions_test FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE;
+ALTER TABLE answers ADD CONSTRAINT answers_question FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE;
+ALTER TABLE chat_messages ADD CONSTRAINT chat_messages_sender FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE chat_messages ADD CONSTRAINT chat_messages_group FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE;
+ALTER TABLE notifications ADD CONSTRAINT notifications_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE user_files ADD CONSTRAINT user_files_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 
 ALTER TABLE user_achievement_progress ADD CONSTRAINT user_progress_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE user_achievements ADD CONSTRAINT user_achievements_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE user_achievements ADD CONSTRAINT user_achievements_achievement FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE;
+ALTER TABLE friends ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE friends ADD CONSTRAINT fk_friend FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE;
+
+
+

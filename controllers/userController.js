@@ -4,6 +4,9 @@ const pool = require('../config/db');
 const generateTokens = require('../utils/generateTokens');
 const achievementService = require('../services/achievementService');
 
+// For deleting user account
+const fs = require('fs');
+const path = require('path');
 
 // registration of user
 const register = async (request, response) => {
@@ -21,7 +24,7 @@ const register = async (request, response) => {
         message: "Username already exists"
       });
     }
-    
+
     const salt = await bcrypt.genSalt(10);
     const hashed_password = await bcrypt.hash(password, salt);
     
@@ -179,17 +182,39 @@ const editPassword = async (request, response) => {
 
 // delete user
 const deleteUser = async (request, response) => {
-  const { id } = request.user.id;
+  const id = request.user.id;
   
   try {
-    
     const userInfo = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
-    
     if (userInfo.rowCount === 0) {
-      return response.status(404).send("User not found");
+      return response.status(404).json({
+        success: false,
+        message: "User not found"
+      });
     }
-    
+
+    // Get all user files before deleting the user
+    const userFiles = await pool.query(
+      "SELECT file_path FROM user_files WHERE user_id = $1",
+      [id]
+    );
+
     await pool.query("DELETE FROM users WHERE id = $1", [id]);
+
+    // Delete physical files
+    if (userFiles.rowCount > 0) {
+      userFiles.rows.forEach(file => {
+        if (fs.existsSync(file.file_path)) {
+          fs.unlinkSync(file.file_path);
+        }
+      });
+    }
+
+    // Delete user's directory
+    const userDir = path.join(__dirname, '../uploads', id);
+    if (fs.existsSync(userDir)) {
+      fs.rmdirSync(userDir, { recursive: true });
+    }
     
     return response.status(200).json({
       success: true,
@@ -198,7 +223,11 @@ const deleteUser = async (request, response) => {
     
   } catch (err) {
     console.error(err);
-    return response.status(500).send("ERROR !");
+    return response.status(500).json({
+      success: false,
+      message: "Error deleting user",
+      error: err.message
+    });
   }
 };
 

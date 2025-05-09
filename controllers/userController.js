@@ -68,6 +68,7 @@ const login = async (request, response) => {
       // generation of JWT tokens
       const { accessToken , refreshToken } = generateTokens(userInfo.rows[0].id);
       
+      // Still set the cookie for browser clients
       response.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         // secure: true
@@ -87,6 +88,7 @@ const login = async (request, response) => {
         message: "User successfully logged in",
         data: userInfoWithoutPassword.rows[0],
         accessToken: accessToken,
+        refreshToken: refreshToken  // we need to add this line fr (cookie is hard to implement xd)
       });
  
     } else {
@@ -101,6 +103,7 @@ const login = async (request, response) => {
     return response.status(500).send("ERROR !");
   }
 };
+
 
 // logout of user
 const logout = async (request, response) => {

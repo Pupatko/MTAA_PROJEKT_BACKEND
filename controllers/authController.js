@@ -25,15 +25,17 @@ const refreshToken = (request, response) => {
 
         return response.json({
             success: true,
-            accessToken
+            accessToken,
+            refreshToken  // Add this line to include the refresh token
         });
         
     } catch (err) {
-        return response.status(403).json({
+        return response.status(401).json({
         success: false,
         message: 'Invalid refresh token',
         });
     }
 };
+
 
 module.exports = { refreshToken };

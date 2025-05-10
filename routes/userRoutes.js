@@ -312,4 +312,43 @@ router.get('/profile', authenticate, userController.profile);
  */
 router.post('/logout', authenticate, userController.logout);
 
+/**
+ * @swagger
+ * /users/me:
+ *   get:
+ *     summary: Get basic information about authenticated user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Basic user information retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     name:
+ *                       type: string
+ *                     group_id:
+ *                       type: string
+ *                       format: uuid
+ *                       nullable: true
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/me', authenticate, userController.getBasicInfo);
+
 module.exports = router;

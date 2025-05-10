@@ -71,6 +71,140 @@ router.get('/', authenticate, groupController.getAllGroups);
 
 /**
  * @swagger
+ * /groups/search:
+ *   get:
+ *     summary: Search groups by name
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Name or part of the name to search
+ *     responses:
+ *       200:
+ *         description: Groups matching the search criteria
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       xp:
+ *                         type: integer
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                       is_owner:
+ *                         type: boolean
+ *                       is_member:
+ *                         type: boolean
+ *       400:
+ *         description: Search name is required
+ *       500:
+ *         description: Server error
+ */
+router.get('/search', authenticate, groupController.searchGroups);
+
+/**
+ * @swagger
+ * /groups/current:
+ *   get:
+ *     summary: Get current user's group
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current group found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     xp:
+ *                       type: integer
+ *                     created_at:
+ *                       type: string
+ *                       format: date-time
+ *                     created_by:
+ *                       type: string
+ *                       format: uuid
+ *                     member_count:
+ *                       type: integer
+ *                     is_owner:
+ *                       type: boolean
+ *       404:
+ *         description: User is not a member of any group or group not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/current', authenticate, groupController.getCurrentUserGroup);
+
+
+/**
+ * @swagger
+ * /groups/leave:
+ *   post:
+ *     summary: Leave the current group (only for group members)
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully left the group
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: You have successfully left the group
+ *       400:
+ *         description: User is not a member of any group
+ *       403:
+ *         description: Only group members can leave the group
+ *       500:
+ *         description: Server error while leaving group
+ */
+router.post('/leave', authenticate, groupController.leaveGroup);
+
+/**
+ * @swagger
  * /groups/{id}:
  *   get:
  *     summary: Get group by ID

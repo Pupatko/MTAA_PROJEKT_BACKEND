@@ -311,6 +311,36 @@ const profile =  async (request, response) => {
   }
 };
 
+const getBasicInfo = async (request, response) => {
+  const id = request.user.id;
+  
+  try {
+    const userInfo = await pool.query(
+      "SELECT id, name, group_id FROM users WHERE id = $1", 
+      [id]
+    );
+
+    if (userInfo.rowCount === 0) {
+      return response.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    return response.status(200).json({
+      success: true,
+      message: "Basic user information retrieved",
+      data: userInfo.rows[0]
+    });
+    
+  } catch (err) {
+    console.error(err);
+    return response.status(500).json({
+      success: false,
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -318,5 +348,6 @@ module.exports = {
   editPassword,
   deleteUser,
   profile,
-  logout
+  logout,
+  getBasicInfo
 }

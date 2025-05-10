@@ -161,7 +161,7 @@ const removeMember = async (request, response) => {
     const user_id = request.params.user_id;
 
     try {
-        if (!id || !user_id) {
+        if (!group_id || !user_id) {
             return response.status(400).json({
                 success: false,
                 message: "Not provided group id or user_id",
@@ -215,23 +215,45 @@ const getAllGroups = async (request, response) => {
 
 const getGroupById = async (request, response) => {
     const id = request.params.id;
+    const userId = request.user.id; 
 
     try {
-        const result = await pool.query("SELECT * FROM groups WHERE id = $1", [id]);
+        const groupResult = await pool.query(
+            `SELECT g.id, g.name, g.description, g.xp, g.created_at, g.created_by,
+                (SELECT COUNT(*) FROM users WHERE group_id = g.id) AS member_count,
+                CASE WHEN g.created_by = $1 THEN true ELSE false END AS is_owner,
+                (SELECT name FROM users WHERE id = g.created_by) AS owner_name
+                -- (SELECT AVG(xp) FROM users WHERE group_id = g.id) AS avg_member_xp
+            FROM groups g
+            WHERE g.id = $2`,
+            [userId, id]
+        );
 
-        if (result.rowCount === 0) {
+        if (groupResult.rowCount === 0) {
             return response.status(404).json({
                 success: false,
                 message: "Group not found",
             });
-        } else {
-            return response.status(200).json({
-                success: true,
-                message: "Group found",
-                data: result.rows[0]
-            });
-        }
+        } 
         
+        const membersResult = await pool.query(
+            `SELECT u.id, u.name, u.xp, u.created_at, 
+                CASE WHEN u.id = g.created_by THEN true ELSE false END AS is_owner
+            FROM users u
+            JOIN groups g ON g.id = u.group_id
+            WHERE u.group_id = $1
+            ORDER BY u.xp DESC`,
+            [id]
+        );
+
+        const groupData = groupResult.rows[0];
+        groupData.members = membersResult.rows;
+
+        return response.status(200).json({
+            success: true,
+            message: "Group found",
+            data: groupData
+        });
     } catch (err) {
         console.error(err);
         return response.status(500).send("ERROR !");
@@ -248,6 +270,45 @@ const addMember = async (request, response) => {
             return response.status(400).json({
                 success: false,
                 message: "Not provided group id or user_id",
+            });
+        }
+
+        // Check if group exists
+        const groupCheck = await pool.query(
+            "SELECT * FROM groups WHERE id = $1",
+            [group_id]
+        );
+
+        if (groupCheck.rowCount === 0) {
+            return response.status(404).json({
+                success: false,
+                message: "Group not found",
+            });
+        }
+
+         // Check if user is already in another group
+         const userGroupCheck = await pool.query(
+            "SELECT group_id FROM users WHERE id = $1 AND group_id IS NOT NULL",
+            [user_id]
+        );
+
+        if (userGroupCheck.rowCount > 0) {
+            const currentGroupId = userGroupCheck.rows[0].group_id;
+            
+            // If user is already in the same group
+            if (currentGroupId === group_id) {
+                return response.status(409).json({
+                    success: false,
+                    message: "You are already a member of this group",
+                    groupId: currentGroupId
+                });
+            }
+            
+            // If user is in a different group
+            return response.status(400).json({
+                success: false,
+                message: "You are already a member of another group. Please leave that group first.",
+                currentGroupId: currentGroupId
             });
         }
 
@@ -296,6 +357,146 @@ const getGroupMembers = async (request, response) => {
     }
 }
 
+const searchGroups = async (request, response) => {
+    const userId = request.user.id;
+    const searchName = request.query.name;
+
+    if (!searchName || searchName.trim() === '') {
+        return response.status(400).json({
+            success: false,
+            message: 'Search name is required'
+        });
+    }
+
+    try {
+        // Search for groups by name, limit to 20 results, ordered by name
+        // Also indicate if the user is a member of the group or is the owner
+        const result = await pool.query(
+            `SELECT g.id, g.name, g.description, g.xp, g.created_at,
+                (SELECT COUNT(*) FROM users WHERE group_id = g.id) AS members_count,
+                CASE WHEN g.created_by = $1 THEN true ELSE false END AS is_owner,
+                CASE WHEN u.group_id = g.id THEN true ELSE false END AS is_member
+            FROM groups g
+            LEFT JOIN users u ON u.id = $1
+            WHERE g.name ILIKE $2
+            ORDER BY g.name ASC
+            LIMIT 20`,
+            [userId, `%${searchName}%`]
+        );
+
+        return response.status(200).json({
+            success: true,
+            data: result.rows
+        });
+    } catch (err) {
+        console.error('Error searching groups:', err);
+        return response.status(500).json({
+            success: false,
+            message: 'Server error while searching groups'
+        });
+    }
+};
+
+const getCurrentUserGroup = async (request, response) => {
+    const user_id = request.user.id;
+
+    try {
+        const userQuery = await pool.query(
+            "SELECT group_id FROM users WHERE id = $1",
+            [user_id]
+        );
+
+        // User does not belong to any group
+        if (!userQuery.rows[0].group_id) {
+            return response.status(404).json({
+                success: false,
+                message: "You are not a member of any group"
+            });
+        }
+
+        const group_id = userQuery.rows[0].group_id;
+
+        // Get user group details
+        const groupQuery = await pool.query(
+            `SELECT g.id, g.name, g.description, g.xp, g.created_at, g.created_by,
+                (SELECT COUNT(*) FROM users WHERE group_id = g.id) AS members_count,
+                CASE WHEN g.created_by = $1 THEN true ELSE false END AS is_owner,
+                CASE WHEN u.group_id = g.id THEN true ELSE false END AS is_member
+            FROM groups g
+            LEFT JOIN users u ON u.id = $1
+            WHERE g.id = $2`,
+            [user_id, group_id]
+        );
+
+        if (groupQuery.rowCount === 0) {
+            return response.status(404).json({
+                success: false,
+                message: "Group not found"
+            });
+        }
+
+        return response.status(200).json({
+            success: true,
+            message: "Current group found",
+            data: groupQuery.rows[0]
+        });
+    } catch (err) {
+        console.error(err);
+        return response.status(500).json({
+            success: false,
+            message: "Server error while retrieving current group"
+        });
+    }
+};
+
+// Only for group members
+const leaveGroup = async (request, response) => {
+    const user_id = request.user.id;
+
+    try {
+        const userGroupQuery = await pool.query(
+            `SELECT u.group_id, g.created_by 
+            FROM users u 
+            JOIN groups g ON u.group_id = g.id 
+            WHERE u.id = $1`,
+            [user_id]
+        );
+
+        if (userGroupQuery.rowCount === 0 || !userGroupQuery.rows[0].group_id) {
+            return response.status(400).json({
+                success: false,
+                message: "You are not a member of any group"
+            });
+        }
+
+        const group_id = userGroupQuery.rows[0].group_id;
+        const group_owner = userGroupQuery.rows[0].created_by;
+
+        if (group_owner === user_id) {
+            return response.status(403).json({
+                success: false,
+                message: "Only group members can leave the group"
+            });
+        }
+
+        await pool.query(
+            "UPDATE users SET group_id = NULL WHERE id = $1",
+            [user_id]
+        );
+
+        return response.status(200).json({
+            success: true,
+            message: "You have successfully left the group"
+        });
+    } catch (err) {
+        console.error(err);
+        return response.status(500).json({
+            success: false,
+            message: "Server error while leaving group"
+        });
+    }
+}
+    
 
 module.exports = {
     create,
@@ -307,4 +508,7 @@ module.exports = {
     getGroupById,
     addMember,
     getGroupMembers,
+    searchGroups,
+    getCurrentUserGroup,
+    leaveGroup
 };

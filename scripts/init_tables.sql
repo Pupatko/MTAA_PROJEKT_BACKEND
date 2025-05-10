@@ -90,6 +90,19 @@ CREATE TABLE user_achievements (
     PRIMARY KEY (user_id, achievement_id)
 );
 
+CREATE TABLE user_test_results (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    test_id VARCHAR(50) NOT NULL,
+    score INTEGER NOT NULL CHECK (score >= 0),
+    max_score INTEGER NOT NULL CHECK (max_score >= 0),
+    percentage DECIMAL(5,2) GENERATED ALWAYS AS (CASE WHEN max_score > 0 THEN (score * 100.0 / max_score) ELSE 0 END) STORED,
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    time_spent INTEGER, -- čas v sekundách
+    CONSTRAINT fk_user_test_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_test_test FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE
+);
+
 -- Table for user files (e.g. profile pictures, documents, etc.)
 CREATE TABLE user_files (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

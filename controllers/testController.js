@@ -36,24 +36,28 @@ const getQuestionsByTestId = async (request, response) => {
     const result = await pool.query("SELECT * FROM questions WHERE test_id = $1", [id]);
     
     if (result.rowCount === 0) {
-      return response.status(404).json({
+      return response.status(200).json({
         success: false,
         message: "No questions in the test",
+        data: []
       });
     } else {
       return response.status(200).json({
         success: true,
-        message: "Questions found in the test ^^",
+        message: "Questions found in the test",
         data: result.rows
       });
     }
     
   } catch (err) {
     console.log(err);
-    return response.status(500).send("ERROR !");
+    return response.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message
+    });
   }
 };
-
 
 // get answers by question id
 const getAnswersByQuestionId = async (request, response) => {
@@ -63,23 +67,29 @@ const getAnswersByQuestionId = async (request, response) => {
     const result = await pool.query("SELECT * FROM answers WHERE question_id = $1", [id]);
 
     if (result.rowCount === 0) {
-      return response.status(404).json({
+      return response.status(200).json({
         success: false,
         message: "No answers in the question",
+        data: []
       });
     } else {
       return response.status(200).json({
         success: true,
-        message: "Answers found in the question ^^",
+        message: "Answers found in the question",
         data: result.rows
       });
     }
     
   } catch (err) {
     console.log(err);
-    return response.status(500).send("ERROR !");
+    return response.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message
+    });
   }
 };
+
 
 // Input: { testId: "uuid", userAnswers: [{ questionId: "uuid", answerId: "uuid" }, ...] }
 const checkUserAnswers = async (request, response) => {
@@ -138,12 +148,19 @@ const checkUserAnswers = async (request, response) => {
           [questionId]
         );
         
+        // Get the user's selected answer text
+        const userAnswer = await pool.query(
+          'SELECT answer_text FROM answers WHERE id = $1',
+          [answerId]
+        );
+        
         incorrectQuestions.push({
           questionId,
           questionText: isQuestionExists.rows[0].question,
           userAnswerId: answerId,
+          userAnswerText: userAnswer.rows[0]?.answer_text || 'Unknown',
           correctAnswerId: correctAnswer.rows[0]?.id,
-          correctAnswerText: correctAnswer.rows[0]?.answer_text
+          correctAnswerText: correctAnswer.rows[0]?.answer_text || 'Unknown'
         });
       }
     }
@@ -156,7 +173,7 @@ const checkUserAnswers = async (request, response) => {
       let xpToAdd = 3;// Default XP for each test
       
       // 5 XP for correct answers
-      xpToAdd +=correctAnswers * 5;
+      xpToAdd += correctAnswers * 5;
       await pool.query('UPDATE users SET xp = xp + $1 WHERE id = $2', [xpToAdd, userId]);// Update user XP in the database
     }
     
@@ -171,8 +188,73 @@ const checkUserAnswers = async (request, response) => {
       }
     });
   } catch (err) {
-    console.log(err);
+    console.error('Error evaluating test:', err);
+    return response.status(500).json({
+      success: false,
+      message: "Failed to evaluate test",
+      error: err.message
+    });
+  }
+};
+
+const getAllSubjects = async (request, response) => {
+  try {
+    const result = await pool.query("SELECT DISTINCT subject FROM tests");
+    return response.status(200).json({
+      success: true,
+      message: "Subjects found",
+      data: result.rows
+    });
+  } catch (err) {
+    console.error(err);
     return response.status(500).send("ERROR !");
+  }
+};
+
+const saveTestResults = async (request, response) => {
+  const userId = request.user.id;
+  const { testId, score, maxScore, timeSpent } = request.body;
+  
+  try {
+    // Validate input
+    if (!testId || score === undefined || maxScore === undefined || timeSpent === undefined) {
+      return response.status(400).json({
+        success: false,
+        message: "Missing required fields"
+      });
+    }
+    
+    // Check if test exists
+    const testCheck = await pool.query('SELECT * FROM tests WHERE id = $1', [testId]);
+    if (testCheck.rowCount === 0) {
+      return response.status(404).json({
+        success: false,
+        message: 'Test not found'
+      });
+    }
+    
+    // Insert results into database
+    const result = await pool.query(
+      `INSERT INTO user_test_results 
+       (user_id, test_id, score, max_score, time_spent) 
+       VALUES ($1, $2, $3, $4, $5) 
+       RETURNING id, score, max_score, percentage, completed_at, time_spent`,
+      [userId, testId, score, maxScore, timeSpent]
+    );
+    
+    return response.status(200).json({
+      success: true,
+      message: "Test results saved successfully",
+      data: result.rows[0]
+    });
+    
+  } catch (err) {
+    console.error('Error saving test results:', err);
+    return response.status(500).json({
+      success: false,
+      message: "Failed to save test results",
+      error: err.message
+    });
   }
 };
 
@@ -180,5 +262,7 @@ module.exports = {
   getTestBySubject,
   getQuestionsByTestId,
   getAnswersByQuestionId,
-  checkUserAnswers
+  checkUserAnswers,
+  getAllSubjects,
+  saveTestResults,
 };

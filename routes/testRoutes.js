@@ -41,7 +41,7 @@ const authenticate = require('../middlewares/authenticate');
  *       500:
  *         description: Server error
  */
-router.get('/test', authenticate, subjectController.getTestBySubject);
+router.post('/test', authenticate, subjectController.getTestBySubject);
 
 /**
  * @swagger
@@ -74,7 +74,7 @@ router.get('/test', authenticate, subjectController.getTestBySubject);
  *       500:
  *         description: Server error
  */
-router.get('/questions', authenticate, subjectController.getQuestionsByTestId);
+router.post('/questions', authenticate, subjectController.getQuestionsByTestId);
 
 /**
  * @swagger
@@ -107,7 +107,7 @@ router.get('/questions', authenticate, subjectController.getQuestionsByTestId);
  *       500:
  *         description: Server error
  */
-router.get('/answers', authenticate, subjectController.getAnswersByQuestionId);
+router.post('/answers', authenticate, subjectController.getAnswersByQuestionId);
 
 /**
  * @swagger
@@ -171,6 +171,10 @@ router.get('/answers', authenticate, subjectController.getAnswersByQuestionId);
  *       500:
  *         description: Server error
  */
-router.post('/answers', authenticate, subjectController.checkUserAnswers);
+router.post('/check-answers', authenticate, subjectController.checkUserAnswers);
+
+router.get('/subjects', authenticate, subjectController.getAllSubjects);
+
+router.post('/results', authenticate, subjectController.saveTestResults);
 
 module.exports = router;

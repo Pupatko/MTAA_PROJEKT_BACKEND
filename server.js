@@ -88,7 +88,7 @@ app.use((err, req, res, next) => {
 });
 
 // Use server.listen instead of app.listen for using socket.io
-server.listen(port, () => {
+server.listen(port, '0.0.0.0', () => {
   console.log('App running on port ' , port);
   console.log('Socket.io server running on port ', port);
   console.log(`API documentation available at http://localhost:${port}/api-docs`);

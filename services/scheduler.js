@@ -1,6 +1,6 @@
 const weeklyStatsService = require('./weeklyStatsSerrvice');
 
-const TEST_MODE = 1;
+const TEST_MODE = 0;
 
 function initializeScheduler() {
   if (TEST_MODE) {

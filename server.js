@@ -49,6 +49,9 @@ app.use(helmet());
 // Swagger route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+const { initializeScheduler } = require('./services/scheduler');
+initializeScheduler(); // Initialize the scheduler for weekly stats
+
 
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API FOR THE APP' })

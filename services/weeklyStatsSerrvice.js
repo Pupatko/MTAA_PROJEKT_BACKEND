@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 const { sendNotification } = require('../sockets/notificationSocket');
 
-const TEST_MODE = 1;
+const TEST_MODE = 0;
 
 async function generateWeeklyStats() {
   const client = await pool.connect();
